@@ -1,57 +1,65 @@
-#include <iostream>
-#include <memory>
-#include <string>
+using System;
 
-class Animal {
-public:
-    virtual std::string speak() const = 0; // 순수 가상 함수
-    virtual ~Animal() = default; // 가상 소멸자
-};
+public abstract class Animal
+{
+    public abstract string Speak();
+}
 
-class Dog : public Animal {
-public:
-    std::string speak() const override {
+public class Dog : Animal
+{
+    public override string Speak()
+    {
         return "Woof!";
     }
-};
+}
 
-class Cat : public Animal {
-public:
-    std::string speak() const override {
+public class Cat : Animal
+{
+    public override string Speak()
+    {
         return "Meow!";
     }
-};
+}
 
-class AnimalFactory {
-public:
-    std::unique_ptr<Animal> createAnimal(const std::string& animalType) {
-        if (animalType == "dog") {
-            return std::make_unique<Dog>();
-        } else if (animalType == "cat") {
-            return std::make_unique<Cat>();
-        } else {
-            return nullptr;
+public class AnimalFactory
+{
+    public Animal CreateAnimal(string animalType)
+    {
+        if (animalType == "dog")
+        {
+            return new Dog();
+        }
+        else if (animalType == "cat")
+        {
+            return new Cat();
+        }
+        else
+        {
+            throw new ArgumentException("Invalid animal type");
         }
     }
-};
+}
 
-int main() {
-    AnimalFactory factory;
+class Program
+{
+    static void Main()
+    {
+        AnimalFactory factory = new AnimalFactory();
 
-    auto dog = factory.createAnimal("dog");
-    if (dog) {
-        std::cout << "Dog says: " << dog->speak() << std::endl;
+        var dog = factory.CreateAnimal("dog");
+        Console.WriteLine($"Dog says: {dog.Speak()}");
+
+        var cat = factory.CreateAnimal("cat");
+        Console.WriteLine($"Cat says: {cat.Speak()}");
+
+        try
+        {
+            var unknown = factory.CreateAnimal("bird");
+            Console.WriteLine($"Unknown animal says: {unknown.Speak()}");
+        }
+        catch (ArgumentException ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
     }
-
-    auto cat = factory.createAnimal("cat");
-    if (cat) {
-        std::cout << "Cat says: " << cat->speak() << std::endl;
-    }
-
-    auto unknown = factory.createAnimal("bird");
-    if (!unknown) {
-        std::cout << "Unknown animal type!" << std::endl;
-    }
-
-    return 0;
 }
