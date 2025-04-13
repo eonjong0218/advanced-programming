@@ -96,7 +96,7 @@ jobs:
 
       # 3. GitHub Release 생성
       - name: Create GitHub Release
-        uses: ncipollo/release-action@v1
+        uses: ncipollo/release-action@v2
         with:
           artifacts: build-artifacts.tar.gz
           token: ${{ secrets.GITHUB_TOKEN }}
