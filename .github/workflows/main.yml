@@ -6,10 +6,14 @@ on:
   pull_request:
     branches: [ main ]
 
+permissions:
+  actions: write
+  contents: write
+
 jobs:
   build:
     name: Build Projects
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout repository
@@ -19,12 +23,14 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y mono-complete
+          mono --version
 
       - name: Install Kotlin compiler
         run: |
           curl -s https://get.sdkman.io | bash
           source "$HOME/.sdkman/bin/sdkman-init.sh"
           sdk install kotlin
+          kotlin -version
         shell: bash
 
       - name: Build C++ Project
@@ -46,8 +52,11 @@ jobs:
         run: |
           tar -czf build-artifacts.tar.gz -C build .
 
+      - name: Debug Archive Creation
+        run: ls -l build-artifacts.tar.gz
+
       - name: Upload Build Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v3.1.3  # 또는 @v4
         with:
           name: build-artifacts
           path: build-artifacts.tar.gz
@@ -56,7 +65,7 @@ jobs:
   release:
     name: Create Release
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     if: github.event_name == 'push'
 
     steps:
@@ -74,8 +83,9 @@ jobs:
         with:
           artifacts: build-artifacts.tar.gz
           token: ${{ secrets.GITHUB_TOKEN }}
-          tag: ${{ github.sha }}
+          tag: "v${{ github.run_id }}-${{ github.run_number }}"
           name: Release ${{ github.sha }}
+          allowUpdates: true
           body: |
             This release contains the compiled binaries for the following projects:
             - C++ Project
