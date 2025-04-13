@@ -1,64 +1,40 @@
-using System;
-
-class Coffee
-{
-    public virtual int Cost()
-    {
-        return 5;
+open class Coffee {
+    open fun cost(): Int {
+        return 5
     }
 }
 
-class CoffeeDecorator : Coffee
-{
-    protected Coffee _coffee;
-
-    public CoffeeDecorator(Coffee coffee)
-    {
-        _coffee = coffee;
-    }
-
-    public override int Cost()
-    {
-        return _coffee.Cost();
+open class CoffeeDecorator(private val coffee: Coffee) : Coffee() {
+    override fun cost(): Int {
+        return coffee.cost()
     }
 }
 
-class MilkDecorator : CoffeeDecorator
-{
-    public MilkDecorator(Coffee coffee) : base(coffee) { }
-
-    public override int Cost()
-    {
-        return _coffee.Cost() + 2;
+class MilkDecorator(coffee: Coffee) : CoffeeDecorator(coffee) {
+    override fun cost(): Int {
+        return super.cost() + 2
     }
 }
 
-class SugarDecorator : CoffeeDecorator
-{
-    public SugarDecorator(Coffee coffee) : base(coffee) { }
-
-    public override int Cost()
-    {
-        return _coffee.Cost() + 1;
+class SugarDecorator(coffee: Coffee) : CoffeeDecorator(coffee) {
+    override fun cost(): Int {
+        return super.cost() + 1
     }
 }
 
-class Program
-{
-    static void Main(string[] args)
-    {
-        // 기본 커피
-        Coffee coffee = new Coffee();
-        Console.WriteLine("Coffee cost: " + coffee.Cost()); // 5
+fun main() {
+    val coffee = Coffee()
+    println("Plain coffee cost: ${coffee.cost()}") // 5
 
-        // 우유 추가
-        Coffee coffeeWithMilk = new MilkDecorator(coffee);
-        Console.WriteLine("Coffee with milk cost: " + coffeeWithMilk.Cost()); // 7
+    val coffeeWithMilk = MilkDecorator(coffee)
+    println("Coffee with milk cost: ${coffeeWithMilk.cost()}") // 7
 
-        // 설탕 추가
-        Coffee coffeeWithSugar = new SugarDecorator(coffee);
-        Console.WriteLine("Coffee with sugar cost: " + coffeeWithSugar.Cost()); // 6
+    val coffeeWithSugar = SugarDecorator(coffee)
+    println("Coffee with sugar cost: ${coffeeWithSugar.cost()}") // 6
 
+    val coffeeWithMilkAndSugar = SugarDecorator(coffeeWithMilk)
+    println("Coffee with milk and sugar cost: ${coffeeWithMilkAndSugar.cost()}") // 8
+}
         // 우유와 설탕 추가
         Coffee coffeeWithMilkAndSugar = new SugarDecorator(coffeeWithMilk);
         Console.WriteLine("Coffee with milk and sugar cost: " + coffeeWithMilkAndSugar.Cost()); // 8
