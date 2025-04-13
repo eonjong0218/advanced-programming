@@ -6,135 +6,87 @@ on:
   pull_request:
     branches: [ main ]
 
-permissions:
-  actions: write
-  contents: write
-
 jobs:
-  build_cpp:
-    name: Build C++ Project
-    runs-on: ubuntu-22.04
+  build:
+    name: Build Projects
+    runs-on: ubuntu-latest
 
     steps:
+      # 1. 레포지토리 체크아웃
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Build C++ Project
-        run: |
-          mkdir -p build/cpp-project
-          g++ cpp-project/*.cpp -o build/cpp-project/cpp-program
-
-      - name: Archive C++ Build Artifacts
-        run: |
-          tar -czf cpp-artifacts.tar.gz -C build/cpp-project .
-      
-      - name: Upload C++ Build Artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: cpp-artifacts
-          path: cpp-artifacts.tar.gz
-
-  build_csharp:
-    name: Build C# Project
-    runs-on: ubuntu-22.04
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
+      # 2. Mono 설치 (C# 빌드를 위해)
       - name: Install Mono (for C# build)
         run: |
           sudo apt-get update
           sudo apt-get install -y mono-complete
-          mono --version
 
-      - name: Build C# Project
-        run: |
-          mkdir -p build/csharp-project
-          mcs csharp-project/*.cs -out:build/csharp-project/csharp-program.exe
-
-      - name: Archive C# Build Artifacts
-        run: |
-          tar -czf csharp-artifacts.tar.gz -C build/csharp-project .
-      
-      - name: Upload C# Build Artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: csharp-artifacts
-          path: csharp-artifacts.tar.gz
-
-  build_kotlin:
-    name: Build Kotlin Project
-    runs-on: ubuntu-22.04
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
+      # 3. Kotlin 컴파일러 설치
       - name: Install Kotlin compiler
         run: |
           curl -s https://get.sdkman.io | bash
           source "$HOME/.sdkman/bin/sdkman-init.sh"
           sdk install kotlin
-          kotlin -version
         shell: bash
 
+      # 4. C++ 프로젝트 빌드
+      - name: Build C++ Project
+        run: |
+          mkdir -p build/cpp-project
+          g++ cpp-project/*.cpp -o build/cpp-project/cpp-program
+
+      # 5. C# 프로젝트 빌드
+      - name: Build C# Project
+        run: |
+          mkdir -p build/csharp-project
+          mcs csharp-project/*.cs -out:build/csharp-project/csharp-program.exe
+
+      # 6. Kotlin 프로젝트 빌드
       - name: Build Kotlin Project
         run: |
           mkdir -p build/kotlin-project
           kotlinc kotlin-project/*.kt -include-runtime -d build/kotlin-project/kotlin-program.jar
 
-      - name: Archive Kotlin Build Artifacts
-        run: |
-          tar -czf kotlin-artifacts.tar.gz -C build/kotlin-project .
-      
-      - name: Upload Kotlin Build Artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: kotlin-artifacts
-          path: kotlin-artifacts.tar.gz
-
-  release:
-    name: Create Release
-    needs: [build_cpp, build_csharp, build_kotlin]
-    runs-on: ubuntu-22.04
-    if: github.event_name == 'push'
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Download C++ Build Artifacts
-        uses: actions/download-artifact@v3
-        with:
-          name: cpp-artifacts
-          path: build/cpp-project
-
-      - name: Download C# Build Artifacts
-        uses: actions/download-artifact@v3
-        with:
-          name: csharp-artifacts
-          path: build/csharp-project
-
-      - name: Download Kotlin Build Artifacts
-        uses: actions/download-artifact@v3
-        with:
-          name: kotlin-artifacts
-          path: build/kotlin-project
-
-      - name: Archive All Build Artifacts
+      # 7. 빌드 결과 압축
+      - name: Archive Build Artifacts
         run: |
           tar -czf build-artifacts.tar.gz -C build .
 
+      # 8. 빌드 결과 업로드 (아티팩트)
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-artifacts
+          path: build-artifacts.tar.gz
+
+  release:
+    name: Create Release
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+
+    steps:
+      # 1. 레포지토리 체크아웃
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # 2. 빌드 아티팩트 다운로드
+      - name: Download Build Artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: build-artifacts
+
+      # 3. GitHub Release 생성
       - name: Create GitHub Release
         uses: ncipollo/release-action@v1
         with:
           artifacts: build-artifacts.tar.gz
           token: ${{ secrets.GITHUB_TOKEN }}
-          tag: "v${{ github.run_id }}-${{ github.run_number }}"
+          tag: ${{ github.sha }}
           name: Release ${{ github.sha }}
           body: |
-            This release contains the compiled binaries for the following projects:
-            - C++ Project
-            - C# Project
-            - Kotlin Project
+            이 릴리즈에는 다음 프로젝트의 컴파일된 바이너리 파일이 포함되어 있습니다:
+            - C++ 프로젝트
+            - C# 프로젝트
+            - Kotlin 프로젝트
