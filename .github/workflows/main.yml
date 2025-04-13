@@ -52,11 +52,18 @@ jobs:
               }
           done
 
-      # 6. Kotlin 프로젝트 빌드
+      # 6. Kotlin 프로젝트 빌드 (각 파일을 독립적으로 컴파일)
       - name: Build Kotlin Project
         run: |
           mkdir -p build/kotlin-project
-          kotlinc kotlin-project/*.kt -include-runtime -d build/kotlin-project/kotlin-program.jar
+          for file in kotlin-project/*.kt; do
+              filename=$(basename "$file" .kt)
+              kotlinc "$file" -include-runtime -d build/kotlin-project/"$filename.jar" || {
+                echo "Compilation failed for $file"
+                cat "$file"
+                exit 1
+              }
+          done
 
       # 7. 빌드 결과 압축
       - name: Archive Build Artifacts
