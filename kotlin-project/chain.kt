@@ -1,58 +1,39 @@
-using System;
+class Calculator {
+    private var result: Double = 0.0
 
-class Calculator
-{
-    private double result;
-
-    public Calculator()
-    {
-        result = 0;
+    fun add(value: Double): Calculator {
+        result += value
+        return this // 자기 자신 반환
     }
 
-    public Calculator Add(double value)
-    {
-        result += value;
-        return this; // 자기 자신 반환
+    fun subtract(value: Double): Calculator {
+        result -= value
+        return this // 자기 자신 반환
     }
 
-    public Calculator Subtract(double value)
-    {
-        result -= value;
-        return this; // 자기 자신 반환
+    fun multiply(value: Double): Calculator {
+        result *= value
+        return this // 자기 자신 반환
     }
 
-    public Calculator Multiply(double value)
-    {
-        result *= value;
-        return this; // 자기 자신 반환
-    }
-
-    public Calculator Divide(double value)
-    {
-        if (value != 0)
-        {
-            result /= value;
+    fun divide(value: Double): Calculator {
+        if (value != 0.0) {
+            result /= value
         }
-        return this; // 자기 자신 반환
+        return this // 자기 자신 반환
     }
 
-    public double GetResult()
-    {
-        return result;
+    fun getResult(): Double {
+        return result
     }
 }
 
-class Program
-{
-    static void Main(string[] args)
-    {
-        Calculator calc = new Calculator();
-        double result = calc.Add(5)
-                            .Multiply(2)
-                            .Subtract(3)
-                            .Divide(2)
-                            .GetResult();
-
-        Console.WriteLine(result); // 출력: 4
-    }
+fun main() {
+    val calc = Calculator()
+    val result = calc.add(5.0)
+        .multiply(2.0)
+        .subtract(3.0)
+        .divide(2.0)
+        .getResult()
+    println(result) // 출력: 4.0
 }
