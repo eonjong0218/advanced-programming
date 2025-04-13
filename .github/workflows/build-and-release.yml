@@ -14,6 +14,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          clean: true  # 깃 캐시를 초기화하여 문제가 생기지 않도록 함
 
       - name: Install Mono (for C# build)
         run: |
@@ -47,7 +49,7 @@ jobs:
           tar -czf build-artifacts.tar.gz -C build .
 
       - name: Upload Build Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v2
         with:
           name: build-artifacts
           path: build-artifacts.tar.gz
@@ -63,7 +65,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Download Build Artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v2
         with:
           name: build-artifacts
           path: .
