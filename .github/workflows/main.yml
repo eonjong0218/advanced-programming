@@ -6,23 +6,23 @@ on:
   pull_request:
     branches: [ main ]
 
+permissions:
+  contents: write  # ✅ 릴리즈에 꼭 필요함!
+
 jobs:
   build:
     name: Build Projects
     runs-on: ubuntu-latest
 
     steps:
-      # 1. 레포지토리 체크아웃
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # 2. Mono 설치 (C# 빌드를 위해)
       - name: Install Mono (for C# build)
         run: |
           sudo apt-get update
           sudo apt-get install -y mono-complete
 
-      # 3. Kotlin 컴파일러 설치
       - name: Install Kotlin compiler
         run: |
           curl -s https://get.sdkman.io | bash
@@ -30,7 +30,6 @@ jobs:
           sdk install kotlin
         shell: bash
 
-      # 4. C++ 프로젝트 빌드
       - name: Build C++ Project
         run: |
           mkdir -p build/cpp-project
@@ -39,7 +38,6 @@ jobs:
               g++ "$file" -o "build/cpp-project/$filename-program"
           done
 
-      # 5. C# 프로젝트 빌드 (각 파일을 독립적으로 컴파일)
       - name: Build C# Project
         run: |
           mkdir -p build/csharp-project
@@ -52,7 +50,6 @@ jobs:
               }
           done
 
-      # 6. Kotlin 프로젝트 빌드 (각 파일을 독립적으로 컴파일)
       - name: Build Kotlin Project
         run: |
           mkdir -p build/kotlin-project
@@ -65,12 +62,10 @@ jobs:
               }
           done
 
-      # 7. 빌드 결과 압축
       - name: Archive Build Artifacts
         run: |
           tar -czf build-artifacts.tar.gz -C build .
 
-      # 8. 빌드 결과 업로드 (아티팩트)
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -84,26 +79,23 @@ jobs:
     if: github.event_name == 'push'
 
     steps:
-      # 1. 레포지토리 체크아웃
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. 빌드 아티팩트 다운로드
       - name: Download Build Artifacts
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts
 
-      # 3. GitHub Release 생성
       - name: Create GitHub Release
         uses: ncipollo/release-action@v1
         with:
           artifacts: build-artifacts.tar.gz
-          token: ${{ secrets.GITHUB_TOKEN }}
-          tag: ${{ github.sha }}
-          name: Release ${{ github.sha }}
+          tag: build-${{ github.run_number }}  # ✅ 태그는 명시적으로 설정
+          name: Release ${{ github.run_number }}
           body: |
             이 릴리즈에는 다음 프로젝트의 컴파일된 바이너리 파일이 포함되어 있습니다:
             - C++ 프로젝트
             - C# 프로젝트
             - Kotlin 프로젝트
+
