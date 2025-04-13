@@ -2,11 +2,9 @@ name: Build and Release
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
   pull_request:
-    branches:
-      - main
+    branches: [ main ]
 
 jobs:
   build:
@@ -37,7 +35,6 @@ jobs:
           tar -czf build-artifacts.tar.gz -C build .
 
       - name: Upload Build Artifacts
-        if: github.event_name == 'pull_request'
         uses: actions/upload-artifact@v3
         with:
           name: build-artifacts
@@ -53,6 +50,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      - name: Download Build Artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: build-artifacts
+          path: .
+
       - name: Create GitHub Release
         uses: ncipollo/release-action@v1
         with:
@@ -64,4 +67,4 @@ jobs:
             This release contains the compiled binaries for the following projects:
             - C++ Project
             - C# Project
-            - Kotlin Project 
+            - Kotlin Project
