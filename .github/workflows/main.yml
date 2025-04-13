@@ -31,11 +31,6 @@ jobs:
         shell: bash
 
       # 4. C++ 프로젝트 빌드
-      - name: Install Eigen
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libeigen3-dev
-
       - name: Build C++ Project
         run: |
           mkdir -p build/cpp-project
