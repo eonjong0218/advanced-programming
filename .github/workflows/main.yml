@@ -39,11 +39,18 @@ jobs:
               g++ "$file" -o "build/cpp-project/$filename-program"
           done
 
-      # 5. C# 프로젝트 빌드
+      # 5. C# 프로젝트 빌드 (각 파일을 독립적으로 컴파일)
       - name: Build C# Project
         run: |
           mkdir -p build/csharp-project
-          mcs csharp-project/*.cs -out:build/csharp-project/csharp-program.exe
+          for file in csharp-project/*.cs; do
+              filename=$(basename "$file" .cs)
+              mcs "$file" -out:build/csharp-project/"$filename.exe" || {
+                echo "Compilation failed for $file"
+                cat "$file"
+                exit 1
+              }
+          done
 
       # 6. Kotlin 프로젝트 빌드
       - name: Build Kotlin Project
