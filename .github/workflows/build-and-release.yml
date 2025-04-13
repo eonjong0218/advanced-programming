@@ -14,8 +14,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-        with:
-          clean: true  # 깃 캐시를 초기화하여 문제가 생기지 않도록 함
 
       - name: Install Mono (for C# build)
         run: |
