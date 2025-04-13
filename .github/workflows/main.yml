@@ -11,23 +11,65 @@ permissions:
   contents: write
 
 jobs:
-  build:
-    name: Build Projects
+  build_cpp:
+    name: Build C++ Project
     runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Debug Network for Upload Artifact
+      - name: Build C++ Project
         run: |
-          curl -I https://github.com/actions/upload-artifact/releases/download/v3.1.3/upload-artifact-v3.1.3.zip
+          mkdir -p build/cpp-project
+          g++ cpp-project/*.cpp -o build/cpp-project/cpp-program
+
+      - name: Archive C++ Build Artifacts
+        run: |
+          tar -czf cpp-artifacts.tar.gz -C build/cpp-project .
+      
+      - name: Upload C++ Build Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: cpp-artifacts
+          path: cpp-artifacts.tar.gz
+
+  build_csharp:
+    name: Build C# Project
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
       - name: Install Mono (for C# build)
         run: |
           sudo apt-get update
           sudo apt-get install -y mono-complete
           mono --version
+
+      - name: Build C# Project
+        run: |
+          mkdir -p build/csharp-project
+          mcs csharp-project/*.cs -out:build/csharp-project/csharp-program.exe
+
+      - name: Archive C# Build Artifacts
+        run: |
+          tar -czf csharp-artifacts.tar.gz -C build/csharp-project .
+      
+      - name: Upload C# Build Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: csharp-artifacts
+          path: csharp-artifacts.tar.gz
+
+  build_kotlin:
+    name: Build Kotlin Project
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
       - name: Install Kotlin compiler
         run: |
@@ -37,38 +79,24 @@ jobs:
           kotlin -version
         shell: bash
 
-      - name: Build C++ Project
-        run: |
-          mkdir -p build/cpp-project
-          g++ cpp-project/*.cpp -o build/cpp-project/cpp-program
-
-      - name: Build C# Project
-        run: |
-          mkdir -p build/csharp-project
-          mcs csharp-project/*.cs -out:build/csharp-project/csharp-program.exe
-
       - name: Build Kotlin Project
         run: |
           mkdir -p build/kotlin-project
           kotlinc kotlin-project/*.kt -include-runtime -d build/kotlin-project/kotlin-program.jar
 
-      - name: Archive Build Artifacts
+      - name: Archive Kotlin Build Artifacts
         run: |
-          tar -czf build-artifacts.tar.gz -C build .
-
-      - name: Debug Archive Creation
-        run: ls -l build-artifacts.tar.gz
-
-      - name: Upload Build Artifacts
-        uses: actions/upload-artifact@v3.1.2  # 또는 @v4 또는 커밋 해시
+          tar -czf kotlin-artifacts.tar.gz -C build/kotlin-project .
+      
+      - name: Upload Kotlin Build Artifacts
+        uses: actions/upload-artifact@v3
         with:
-          name: build-artifacts
-          path: build-artifacts.tar.gz
-          if-no-files-found: error
+          name: kotlin-artifacts
+          path: kotlin-artifacts.tar.gz
 
   release:
     name: Create Release
-    needs: build
+    needs: [build_cpp, build_csharp, build_kotlin]
     runs-on: ubuntu-22.04
     if: github.event_name == 'push'
 
@@ -76,11 +104,27 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Download Build Artifacts
+      - name: Download C++ Build Artifacts
         uses: actions/download-artifact@v3
         with:
-          name: build-artifacts
-          path: .
+          name: cpp-artifacts
+          path: build/cpp-project
+
+      - name: Download C# Build Artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: csharp-artifacts
+          path: build/csharp-project
+
+      - name: Download Kotlin Build Artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: kotlin-artifacts
+          path: build/kotlin-project
+
+      - name: Archive All Build Artifacts
+        run: |
+          tar -czf build-artifacts.tar.gz -C build .
 
       - name: Create GitHub Release
         uses: ncipollo/release-action@v1
@@ -89,7 +133,6 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           tag: "v${{ github.run_id }}-${{ github.run_number }}"
           name: Release ${{ github.sha }}
-          allowUpdates:physics: true
           body: |
             This release contains the compiled binaries for the following projects:
             - C++ Project
