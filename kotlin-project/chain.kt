@@ -35,5 +35,5 @@ fun main() {
         .subtract(3.0)
         .divide(2.0)
         .getResult()
-    println(result) // 출력: 4.0
+    println(result)
 }
