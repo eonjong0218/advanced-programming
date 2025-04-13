@@ -34,7 +34,10 @@ jobs:
       - name: Build C++ Project
         run: |
           mkdir -p build/cpp-project
-          g++ cpp-project/*.cpp -o build/cpp-project/cpp-program
+          for file in cpp-project/*.cpp; do
+              filename=$(basename "$file" .cpp)
+              g++ "$file" -o "build/cpp-project/$filename-program"
+          done
 
       # 5. C# 프로젝트 빌드
       - name: Build C# Project
